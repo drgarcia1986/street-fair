@@ -1,0 +1,12 @@
+FROM golang:1.16.3
+WORKDIR /go/src/github.com/drgarcia1986/street-fair
+COPY . .
+RUN CGO_ENABLED=0 make build-importer
+
+FROM alpine:latest  
+RUN apk --no-cache add ca-certificates \
+ && apk --no-cache upgrade musl
+WORKDIR /app/
+COPY --from=0 /go/src/github.com/drgarcia1986/street-fair/importer .
+COPY ./DEINFO_AB_FEIRASLIVRES_2014.csv .
+CMD ["./importer", "-path", "DEINFO_AB_FEIRASLIVRES_2014.csv"]

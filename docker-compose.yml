@@ -1,0 +1,37 @@
+version: "3.9"
+
+services:
+  db:
+    image: postgres
+    environment:
+      - POSTGRES_DB=streetfair
+      - POSTGRES_USER=fair
+      - POSTGRES_PASSWORD=fair
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U root"]
+      interval: 30s
+
+  importer:
+    build:
+      dockerfile: ./Dockerfile_Importer
+      context: .
+    environment:
+      - FAIR_DATABASE_HOST=db
+      - FAIR_LOG_FILE_PATH=-
+    depends_on:
+      db:
+        condition: service_healthy
+
+  api:
+    build: .
+    ports:
+      - "8000:8000"
+    environment:
+      - FAIR_DATABASE_HOST=db
+      - FAIR_LOG_FILE_PATH=-
+    restart: on-failure:5
+    depends_on:
+      db:
+        condition: service_healthy
+      importer:
+        condition: service_started
